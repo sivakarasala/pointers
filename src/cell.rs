@@ -19,8 +19,11 @@ impl<T> Cell<T> {
         unsafe { *self.value.get() = value };
     }
 
-    pub fn get(&self) -> &T {
-        unsafe { &*self.value.get() }
+    pub fn get(&self) -> T
+    where
+        T: Copy,
+    {
+        unsafe { *self.value.get() }
     }
 }
 
@@ -32,15 +35,24 @@ mod test {
     fn bad() {
         use std::sync::Arc;
 
-        let x = std::sync::Arc::new(Cell::new(42));
+        let x = std::sync::Arc::new(Cell::new(0));
         let x1 = Arc::clone(&x);
-        std::thread::spawn(move || {
-            x1.set(43);
+        let jh1 = std::thread::spawn(move || {
+            for _ in 0..100000 {
+                let x = x1.get();
+                x1.set(x + 1);
+            }
         });
         let x2 = Arc::clone(&x);
-        std::thread::spawn(move || {
-            x2.set(44);
+        let jh2 = std::thread::spawn(move || {
+            for _ in 0..100000 {
+                let x = x2.get();
+                x2.set(x + 1);
+            }
         });
+        jh1.join().unwrap();
+        jh2.join().unwrap();
+        assert_eq!(x.get(), 200000);
     }
 
     #[test]
