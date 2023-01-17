@@ -8,7 +8,7 @@ pub struct Cell<T> {
 // impl<T> !Sync for Cell<T> {}
 
 impl<T> Cell<T> {
-    fn new(value: T) -> Self {
+    pub fn new(value: T) -> Self {
         Cell {
             value: UnsafeCell::new(value),
         }
